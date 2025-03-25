@@ -1,15 +1,16 @@
 import sys
 import math
-import numpy as np
+import re
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QGridLayout, QPushButton, QLineEdit, QLabel)
-from PyQt5.QtGui import QFont, QPalette, QColor, QLinearGradient, QPainter
+from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
 
 class ScientificCalculator(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
+        self.parenthesis_count = 0
         
     def initUI(self):
         # Main window setup
@@ -94,55 +95,81 @@ class ScientificCalculator(QMainWindow):
             }
         """)
         button.clicked.connect(lambda: self.button_click(text))
-        
-        # Add hover animation
-        button.enterEvent = lambda event: self.button_hover_animation(button)
-        
         return button
     
-    def button_hover_animation(self, button):
-        # Create a subtle scale animation
-        anim = QPropertyAnimation(button, b"geometry")
-        anim.setDuration(100)
-        anim.setStartValue(button.geometry())
-        anim.setEndValue(QRect(
-            button.x() - 5, 
-            button.y() - 5, 
-            button.width() + 10, 
-            button.height() + 10
-        ))
-        anim.setEasingCurve(QEasingCurve.OutBounce)
-        anim.start()
-    
     def button_click(self, value):
+        current_text = self.display.text()
+        
         try:
             if value == 'C':
                 self.display.clear()
+                self.parenthesis_count = 0
             elif value == '⌫':
-                self.display.setText(self.display.text()[:-1])
+                if current_text:
+                    # Track parenthesis count when deleting
+                    if current_text[-1] == '(':
+                        self.parenthesis_count -= 1
+                    elif current_text[-1] == ')':
+                        self.parenthesis_count += 1
+                    self.display.setText(current_text[:-1])
+            elif value == '(':
+                # Only allow opening parenthesis if it makes sense
+                if not current_text or current_text[-1] in '(+-*/^':
+                    self.display.setText(current_text + value)
+                    self.parenthesis_count += 1
+            elif value == ')':
+                # Only close parenthesis if there are unclosed parentheses
+                if self.parenthesis_count > 0 and current_text and current_text[-1] not in '(+-*/^':
+                    self.display.setText(current_text + value)
+                    self.parenthesis_count -= 1
             elif value == '=':
                 result = self.calculate()
-                self.history_label.setText(f'Last Calculation: {self.display.text()} = {result}')
+                self.history_label.setText(f'Last Calculation: {current_text} = {result}')
                 self.display.setText(str(result))
+                self.parenthesis_count = 0
             elif value == '√':
-                self.display.setText(str(math.sqrt(float(self.display.text() or 0))))
+                self.display.setText(f'sqrt({current_text})')
             elif value == 'π':
-                self.display.setText(str(math.pi))
+                self.display.setText(current_text + 'pi')
             elif value == 'e':
-                self.display.setText(str(math.e))
+                self.display.setText(current_text + 'e')
             elif value in ['sin', 'cos', 'tan', 'log']:
-                func = getattr(math, value)
-                self.display.setText(str(func(float(self.display.text() or 0))))
+                self.display.setText(f'{value}({current_text})')
             else:
-                self.display.setText(self.display.text() + value)
+                # Prevent consecutive operators
+                if value in ['+', '-', '*', '/', '^'] and current_text and current_text[-1] in ['+', '-', '*', '/', '^']:
+                    self.display.setText(current_text[:-1] + value)
+                else:
+                    self.display.setText(current_text + value)
         except Exception as e:
             self.display.setText('Error')
     
     def calculate(self):
         try:
-            # Replace ^ with power operator
-            expression = self.display.text().replace('^', '**')
-            return eval(expression)
+            # Comprehensive expression parsing
+            expression = self.display.text()
+            
+            # Replace mathematical constants
+            expression = expression.replace('pi', str(math.pi))
+            expression = expression.replace('e', str(math.e))
+            
+            # Replace trigonometric and logarithmic functions
+            expression = re.sub(r'sin\(', 'math.sin(', expression)
+            expression = re.sub(r'cos\(', 'math.cos(', expression)
+            expression = re.sub(r'tan\(', 'math.tan(', expression)
+            expression = re.sub(r'log\(', 'math.log10(', expression)
+            expression = re.sub(r'sqrt\(', 'math.sqrt(', expression)
+            
+            # Replace power operator
+            expression = expression.replace('^', '**')
+            
+            # Validate parentheses
+            if expression.count('(') != expression.count(')'):
+                return 'Invalid Parentheses'
+            
+            # Safe evaluation
+            result = eval(expression)
+            return round(result, 10)
         except Exception as e:
             return 'Error'
     
@@ -150,7 +177,6 @@ class ScientificCalculator(QMainWindow):
         self.advanced_mode = not self.advanced_mode
         self.advanced_toggle.setText('Advanced Mode: ' + 
                                      ('ON' if self.advanced_mode else 'OFF'))
-        # Future: Add more advanced features when mode is toggled
     
     def get_stylesheet(self):
         return """
