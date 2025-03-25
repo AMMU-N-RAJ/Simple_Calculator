@@ -131,7 +131,7 @@ MIT License - Open source and free to use!
 ![demo](https://github.com/AMMU-N-RAJ/Simple_Calculator/blob/main/demo3.gif)
 
 ### Qt5 Desktop Calculator
-[Qt5 Calculator Screenshot]
+
 ![demo](https://github.com/AMMU-N-RAJ/Simple_Calculator/blob/main/demo4.gif)
 
 ## Acknowledgements 🙏
