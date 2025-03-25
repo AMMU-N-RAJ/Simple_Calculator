@@ -1,99 +1,68 @@
-// Wait for the DOM to fully load
 document.addEventListener('DOMContentLoaded', () => {
-    // Select all buttons
-    const buttons = document.querySelectorAll('button');
     const display = document.getElementById('display');
 
-    // Add click event listeners to all buttons
-    buttons.forEach(button => {
-        button.addEventListener('click', () => {
-            const value = button.textContent;
-            
-            switch(value) {
-                case 'C':
-                    clearDisplay();
-                    break;
-                case '⌫':
-                    deleteLastChar();
-                    break;
-                case '=':
-                    calculate();
-                    break;
-                case 'sin':
-                    appendToDisplay('sin(');
-                    break;
-                case 'cos':
-                    appendToDisplay('cos(');
-                    break;
-                case 'tan':
-                    appendToDisplay('tan(');
-                    break;
-                default:
-                    if (button.classList.contains('number') || 
-                        button.classList.contains('operator') || 
-                        value === '.' || 
-                        value === '(' || 
-                        value === ')' ||
-                        value === '^') {
-                        appendToDisplay(value);
-                    }
-            }
-        });
-    });
-
-    // Function to append characters to display
-    function appendToDisplay(value) {
-        display.value += value;
-    }
-
-    // Function to clear the display
-    function clearDisplay() {
-        display.value = '';
-    }
-
-    // Function to delete last character
-    function deleteLastChar() {
-        display.value = display.value.slice(0, -1);
-    }
-
-    // Function to calculate result
+    // Enhanced calculation function with comprehensive error handling
     function calculate() {
         try {
-            // Replace ^ with Math.pow for exponentiation
-            let expression = display.value.replace(/\^/g, '**');
+            // Comprehensive mathematical expression processing
+            let expression = display.value
+                // Handle power/exponentiation
+                .replace(/\^/g, '**')
+                
+                // Trigonometric functions with radian conversion
+                .replace(/sin\(/g, 'Math.sin(Math.PI/180 * ')
+                .replace(/cos\(/g, 'Math.cos(Math.PI/180 * ')
+                .replace(/tan\(/g, 'Math.tan(Math.PI/180 * ')
+                
+                // Ensure closure of trigonometric function parentheses
+                .replace(/Math\.(sin|cos|tan)\(Math\.PI\/180 \* ([^)]+)\)/g, 'Math.$1(Math.PI/180 * $2)');
+
+            // Security: Remove any potentially malicious characters
+            expression = expression.replace(/[^0-9+\-*\/().,\s]/g, '');
+
+            // Safe evaluation using Function constructor
+            const result = new Function(`return (${expression})`)();
             
-            // Replace trigonometric functions
-            expression = expression.replace(/sin\(/g, 'Math.sin(');
-            expression = expression.replace(/cos\(/g, 'Math.cos(');
-            expression = expression.replace(/tan\(/g, 'Math.tan(');
-            
-            // Convert to radians for trigonometric functions
-            expression = expression.replace(/Math\.(sin|cos|tan)\(/g, 'Math.$1(Math.PI/180 * ');
-            
-            // Evaluate the expression
-            const result = eval(expression);
-            
-            // Display the result
+            // Round result to prevent floating-point precision issues
             display.value = Number(result.toFixed(10));
         } catch (error) {
             display.value = 'Error';
+            console.error('Calculation Error:', error);
         }
     }
 
+    // Universal display append function
+    function appendToDisplay(value) {
+        // Special handling for scientific functions
+        if (['sin', 'cos', 'tan'].includes(value)) {
+            display.value += `${value}()`;
+            
+            // Position cursor between parentheses
+            const lastIndex = display.value.length - 1;
+            display.setSelectionRange(lastIndex, lastIndex);
+        } else {
+            display.value += value;
+        }
+    }
+
+    // Attach functions to window for HTML onclick compatibility
+    window.appendToDisplay = appendToDisplay;
+    window.calculate = calculate;
+    window.clearDisplay = () => display.value = '';
+    window.deleteLastChar = () => display.value = display.value.slice(0, -1);
+
     // Keyboard support
-    document.addEventListener('keydown', (event) => {
-        const key = event.key;
+    display.addEventListener('keydown', (event) => {
+        const allowedKeys = /^[0-9+\-*/().^]$/;
         
-        // Numeric and basic operator keys
-        const validKeys = '0123456789.+-*/()';
-        
-        if (validKeys.includes(key)) {
-            appendToDisplay(key);
-        } else if (key === 'Enter') {
+        if (allowedKeys.test(event.key)) {
+            event.preventDefault();
+            appendToDisplay(event.key);
+        } else if (event.key === 'Enter') {
             calculate();
-        } else if (key === 'Backspace') {
+        } else if (event.key === 'Backspace') {
             deleteLastChar();
-        } else if (key === 'Escape') {
+        } else if (event.key === 'Escape') {
             clearDisplay();
         }
     });
