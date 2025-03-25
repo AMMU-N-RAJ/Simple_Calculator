@@ -1,7 +1,7 @@
 # 🧮 Multi-Platform Scientific Calculator Project
 
 ## Project Overview 📘
-A versatile scientific calculator implemented across multiple platforms, showcasing web and desktop development techniques.
+A versatile web-based scientific calculator that brings powerful mathematical capabilities right to your browser. This lightweight JavaScript application supports complex calculations with an intuitive, user-friendly interface.
 
 ## Project Variants 🚀
 1. **Web-based Calculator**
