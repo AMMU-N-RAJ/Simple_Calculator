@@ -64,6 +64,11 @@ A versatile scientific calculator implemented across multiple platforms, showcas
 ### Web Calculator
 1. Clone repository
 2. Open `index.html` in browser
+```bash
+# To run in the browser,commands for the terminal
+>>npm install -g http-server
+>>http-server
+```
 
 ### Qt5 Calculator
 ```bash
