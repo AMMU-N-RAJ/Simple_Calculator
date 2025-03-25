@@ -120,10 +120,12 @@ MIT License - Open source and free to use!
 
 ## Screenshots 📸
 ### Web Calculator
-![Web Calculator Screenshot](web_calc_screenshot.png)
+[Web Calculator]
+![demo]()
 
 ### Qt5 Desktop Calculator
-![Qt5 Calculator Screenshot](qt5_calc_screenshot.png)
+[Qt5 Calculator Screenshot]
+![demo]()
 
 ## Acknowledgements 🙏
 - PyQt5 Documentation
