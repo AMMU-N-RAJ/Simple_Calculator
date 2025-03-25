@@ -66,8 +66,10 @@ A versatile scientific calculator implemented across multiple platforms, showcas
 2. Open `index.html` in browser
 ```bash
 # To run in the browser,commands for the terminal
->>npm install -g http-server
->>http-server
+npm install -g http-server
+
+# Then run the server
+http-server
 ```
 
 ### Qt5 Calculator
